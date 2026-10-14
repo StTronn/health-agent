@@ -41,11 +41,13 @@ family/                        the household's memory (markdown, git-friendly)
 
 **5. Code only where determinism matters.** It's one custom tool plus one guardrail:
 - **`escalate(level)`** returns a fixed message, which ends the turn so the model can't rephrase it. It also logs the case to `family/handoffs.md`, which stands in for the doctor queue: routing done in code.
-- **The backstop** (`after_agent` middleware) runs at the end of every turn. If the agent escalated, the reply is forced to the exact fixed text. If the agent missed a red flag, a check can still trigger the emergency message:
-  - `rules.py`: a deterministic regex of phrases that always mean emergency, with negation handled.
-  - `jev.py`: a model-based Jev check ("is this an emergency right now?"), skipped if no key is set.
 
-  Further checks are just functions added to `CHECKS`. Code reports or stops; it never tries to fix the agent's reasoning.
+> [!IMPORTANT]
+> **The backstop** (`after_agent` middleware) runs at the end of every turn. If the agent escalated, the reply is forced to the exact fixed text. If the agent missed a red flag, a check can still trigger the emergency message:
+> - `rules.py`: a deterministic regex of phrases that always mean emergency, with negation handled.
+> - `jev.py`: a model-based Jev check ("is this an emergency right now?"), skipped if no key is set.
+>
+> Further checks are just functions added to `CHECKS`. Code reports or stops; it never tries to fix the agent's reasoning.
 
 ## Extension points
 
