@@ -17,7 +17,7 @@ sys.path.insert(0, str(WS))
 from agent import agent  # noqa: E402
 
 PARENT = """You are role-playing a parent texting a family health assistant, following the brief below.
-Write only your next message: short and natural, answering only what you're asked from the facts given.
+Write only your next message: short and natural, answering only what you're asked from the facts given. Never volunteer facts you weren't asked about, and if the assistant escalates, accept it and end.
 When the brief says the conversation is over, reply exactly [END].
 
 {brief}"""

@@ -21,8 +21,8 @@ family/                        the household's memory (markdown, git-friendly)
 - **pi-durable:** experimental, with no subagents or scheduling built in.
 
 **2. A main agent and one task agent** (the pattern from Instinct and Claude Code):
-- **Main agent:** has the personality and handles the conversation. It owns memory and decides who and which episode a message is about. It's also the **checker** and is **proactive**: it compares triage's result with the whole household's history (it may raise the level, never lower it without new facts), checks in on open follow-ups, and notices patterns across members. It's the only one that escalates.
-- **Worker Agent:** a **fork** subagent. It inherits the conversation, prompt, memory and skills, so nothing has to be re-explained. It follows one skill: *check → gather → analyse → verify → record*, and returns either focused questions or a level with evidence. It never talks to the user.
+- **Main agent:** has the personality and handles the conversation. It owns memory and decides who and which episode a message is about. It's also the **checker** and is **proactive**: it compares triage's result with the whole household's history (it may raise the level, never lower it without new facts), checks in on open follow-ups, and notices patterns across members. It asks triage's questions in its own words and **checks triage's verdict before acting**: was enough gathered, is the level supported by what the parent said, is it proportionate. It's the only one that escalates.
+- **Worker Agent:** a **fork** subagent. It inherits the conversation, prompt, memory and skills, so nothing has to be re-explained. It follows one skill: *check → gather → analyse → record*. It formulates the clinical follow-up questions (each with why it matters), can look up current guidance with web search, keeps its working state in the episode's `## Triage` section, and returns either questions or a level with its reason, evidence and trend. It never talks to the user.
 - **No per-step subagents or separate verifier.** The steps depend on each other, forks can't start further subagents, and a model follows a short checklist reliably. Splitting it would add hand-offs without benefit.
 
 > [!NOTE]
@@ -37,7 +37,7 @@ family/                        the household's memory (markdown, git-friendly)
 **4. Separate identity from instructions** :
 - `SOUL.md` is who it is: calm, warm, concise, resourceful before asking, proactive, safety over certainty.
 - `prompt.md` is how it works, and defines what "done" means for a turn.
-- The skill is guidance rather than a rigid recipe, with its reference material (`red-flags.md`) loaded only when needed.
+- Skills are guidance rather than rigid recipes: `triage` is the method, and `home-care` is the reference it checks against, loaded only when needed.
 
 **5. Code only where determinism matters.** It's one custom tool plus one guardrail:
 - **`escalate(level)`** returns a fixed message, which ends the turn so the model can't rephrase it. It also logs the case to `family/handoffs.md`, which stands in for the doctor queue: routing done in code.
@@ -48,6 +48,13 @@ family/                        the household's memory (markdown, git-friendly)
 > - `jev.py`: a model-based Jev check ("is this an emergency right now?"), skipped if no key is set.
 >
 > Further checks are just functions added to `CHECKS`. Code reports or stops; it never tries to fix the agent's reasoning.
+
+## Home-care reference
+
+`skills/home-care/` is a short basic-health reference: red flags, common complaints (what to ask, home care, when to see a doctor), who needs a lower threshold (age, chronic conditions, pregnancy), and everyday medicine rules. Triage decides against it, so a missing detail or a routine medicine question doesn't turn into a referral.
+
+> [!WARNING]
+> This reference is close to the cases the evals test (fever, vomiting, headache, children and a diabetic grandparent), so it partly teaches to the test and flatters the scores. A real product would need a broader, clinically reviewed reference, or retrieval over a proper knowledge base.
 
 ## Extension points
 

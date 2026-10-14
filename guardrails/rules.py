@@ -1,8 +1,8 @@
 """Deterministic check: phrases that always mean emergency. Kept short on purpose;
-the full clinical list lives in skills/triage/red-flags.md for the agent."""
+the full clinical list lives in skills/home-care/red-flags.md for the agent."""
 import re
 
-NOT = r"(?<!\bno )(?<!\bnot )(?<!\bwithout )(?<!\bnever )"
+NOT = r"(?<!\bno )(?<!\bnot )(?<!\bwithout )(?<!\bnever )(?<!\bno signs of )(?<!\bhasn't had a )(?<!\bhasn't had any )(?<!\bdidn't have a )(?<!\bdidn't have any )(?<!\bhas not had a )(?<!\bdid not have a )"
 RED_FLAGS = re.compile(NOT + r"\b(" + "|".join([
     r"not breathing", r"stopped breathing", r"can'?t breathe", r"gasping",
     r"unconscious", r"unresponsive", r"(won'?t|can'?t|cannot) (wake|be woken)",
