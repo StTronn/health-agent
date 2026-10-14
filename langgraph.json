@@ -1,0 +1,7 @@
+{
+  "dependencies": ["deepagents>=0.7.25", "langchain-openai", "python-dotenv", "typesafe-sdk"],
+  "graphs": {
+    "agent": "./agent.py:agent",
+    "scenario": "./evals/scenario.py:scenario"
+  }
+}

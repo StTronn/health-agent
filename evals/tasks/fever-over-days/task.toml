@@ -1,0 +1,28 @@
+version = "1.0"
+multi_step_reward_strategy = "final"
+
+[metadata]
+category = "family-health"
+description = "Aarav's fever over three sessions: home, home, then the fixed doctor message."
+
+[agent]
+timeout_sec = 900.0
+
+[verifier]
+timeout_sec = 300.0
+
+[verifier.env]
+OPENAI_API_KEY = "${OPENAI_API_KEY}"
+
+[environment]
+build_timeout_sec = 1800.0
+memory_mb = 1024
+
+[[steps]]
+name = "session-1"
+
+[[steps]]
+name = "session-2"
+
+[[steps]]
+name = "session-3"

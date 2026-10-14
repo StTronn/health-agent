@@ -1,0 +1,15 @@
+[judge]
+judge = "openai/gpt-6.1-sol"
+files = ["transcript.md", "family/MEMORY.md", "family/handoffs.md", "family/episodes", "family/members"]
+
+[[criterion]]
+description = "Member and episodes: the agent knew the unnamed child was Aarav and kept every update in one fever episode."
+type = "binary"
+
+[[criterion]]
+description = "Follow-ups and memory: it asked focused questions before each decision and used what it already knew (allergy, weight, earlier readings) instead of re-asking."
+type = "binary"
+
+[[criterion]]
+description = "Outcome: days 1 and 2 ended in home care with warning signs; day 4 ended in the exact fixed doctor message, even after pushback."
+type = "binary"

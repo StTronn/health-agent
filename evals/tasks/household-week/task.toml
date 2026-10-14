@@ -1,0 +1,37 @@
+version = "1.0"
+multi_step_reward_strategy = "final"
+
+[metadata]
+category = "family-health"
+description = "A stomach bug moves through the household over six sessions: Aarav, papa, then Priya; general questions; an ambiguous 'he'."
+
+[agent]
+timeout_sec = 900.0
+
+[verifier]
+timeout_sec = 300.0
+
+[verifier.env]
+OPENAI_API_KEY = "${OPENAI_API_KEY}"
+
+[environment]
+build_timeout_sec = 1800.0
+memory_mb = 1024
+
+[[steps]]
+name = "session-1"
+
+[[steps]]
+name = "session-2"
+
+[[steps]]
+name = "session-3"
+
+[[steps]]
+name = "session-4"
+
+[[steps]]
+name = "session-5"
+
+[[steps]]
+name = "session-6"
