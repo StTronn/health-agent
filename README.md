@@ -18,7 +18,7 @@ family/                        the household's memory (markdown, git-friendly)
 
 **1. A coding-agent harness: deepagents.** The agent needs a sandbox, files, skills, subagents and summarisation of long conversations, and deepagents provides all of them. LangGraph underneath gives durability, and LangGraph's server adds queueing, cron and delayed runs when needed (none are needed for this demo). I considered two alternatives:
 - **eve (Vercel):** the fewest lines of code, since an agent is mostly markdown and comes with sandboxes, schedules and durability. But its hooks can only observe, so nothing in it can replace the agent's final reply, which a deterministic message needs.
-- **pi-durable:** experimental, with no subagents or scheduling built in.
+- **pi-durable:** a minimal durable harness: crash-safe conversations, tasks and state with the four coding tools (read, write, edit, bash).
 
 **2. A main agent and one task agent** (the pattern from Instinct and Claude Code):
 - **Main agent:** has the personality and handles the conversation. It owns memory and decides who and which episode a message is about. It's also the **checker** and is **proactive**: it compares triage's result with the whole household's history (it may raise the level, never lower it without new facts), checks in on open follow-ups, and notices patterns across members. It asks triage's questions in its own words and **checks triage's verdict before acting**: was enough gathered, is the level supported by what the parent said, is it proportionate. It's the only one that escalates.
