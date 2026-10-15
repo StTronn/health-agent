@@ -19,7 +19,7 @@ agent = create_deep_agent(
     memory=["/family/MEMORY.md"],
     skills=["/skills/"],
     backend=LocalShellBackend(root_dir=ROOT, virtual_mode=True),
-    tools=[escalate],  # extension point: lab, knowledge-base or telemedicine tools / MCP go here
+    tools=[escalate, {"type": "web_search"}],  # extension point: lab, knowledge-base or telemedicine tools / MCP go here
     subagents=[{
         "name": "triage", "mode": "fork", "tools": [{"type": "web_search"}],  # OpenAI built-in search
         "description": "Continue this conversation as the triage clinician: follow the triage skill on the "
