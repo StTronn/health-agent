@@ -12,12 +12,13 @@ A companion that stays with a household for years, the way a good family doctor 
 
 ## What it becomes
 
-1. **Doctors in the loop, both ways.** Today a handoff ends the conversation. Next, the doctor's answer comes back into the episode: the plan, the prescription, when to review. The companion then helps the family follow it.
-2. **It follows up on its own.** Episodes carry their own check-ins ("how's the fever this evening?"), medicine reminders and review dates. It speaks up only when something is due or changes, so it stays quiet when nothing matters.
-3. **More of the family's real data.** Lab reports, prescriptions, vaccination cards and discharge summaries are read into memory. Wearables and home devices (glucometer, BP cuff, thermometer) add numbers, so trends are measured, not guessed.
-4. **Memory the family owns.** The household's health record is plain files the family can read, correct, export and share with any doctor. It survives changing apps, insurers and cities.
-5. **Care across the household.** It sees patterns no single visit can: the same bug moving through the house, a parent's sugars drifting over months, a child's growth over years. It shares context between family members only with permission.
-6. **Gets better from every case.** Doctors' outcomes become feedback: which home-care calls were right, which referrals were needed. The agent's skills improve against real outcomes, not its own judgement.
+1. **Proactive care, not just replies.** It keeps each person's care on schedule and nudges at the right moment: "Papa's HbA1c is due this month", "Aarav's 5-year booster is coming up", "it's been a year since your last check-up". Open episodes carry their own check-ins ("how's the fever this evening?") and medicine reminders. It speaks up when something is due or changing, and stays quiet otherwise.
+2. **Gets things done, end to end.** Advice isn't the end of the job. With the family's approval, it books the GP or paediatric appointment, schedules a home blood test, reorders a running-low prescription and arranges delivery, using browser use and a calling agent for clinics and pharmacies that only take phone calls. It confirms before anything that costs money or can't be undone, then tracks it to completion ("the lab is coming Saturday at 8, fasting from midnight").
+3. **Doctors in the loop, both ways.** Today a handoff ends the conversation. Next, the doctor's answer comes back into the episode: the plan, the prescription, when to review. The companion then helps the family follow it.
+4. **More of the family's real data.** Lab reports, prescriptions, vaccination cards and discharge summaries are read into memory. Wearables and home devices (glucometer, BP cuff, thermometer) add numbers, so trends are measured, not guessed.
+5. **Memory the family owns.** The household's health record is plain files the family can read, correct, export and share with any doctor. It survives changing apps, insurers and cities.
+6. **Care across the household.** It sees patterns no single visit can: the same bug moving through the house, a parent's sugars drifting over months, a child's growth over years. It shares context between family members only with permission.
+7. **Gets better from every case.** Doctors' outcomes become feedback: which home-care calls were right, which referrals were needed. The agent's skills improve against real outcomes, not its own judgement.
 
 ## What it never does
 
