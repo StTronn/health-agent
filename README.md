@@ -7,10 +7,11 @@ A small agent for one household's health conversations. It works out who and wha
 The whole design rests on one bet: **give a strong model a few powerful building blocks, and put behaviour in files rather than code.** That means a coding agent's sandbox (files plus a shell), markdown memory, a soul and a prompt, and skills, with as few custom tools as possible and only a thin layer of code where determinism is required.
 
 ```
-agent.py              31 LOC   main agent + triage fork + one tool + one guardrail
+agent.py              34 LOC   main agent + three-specialist triage panel + one tool + one guardrail
 guardrails/           75 LOC   fixed messages, escalate tool, backstop (rules + Jev)
 SOUL.md, prompt.md             who it is / how it works
-skills/triage/                 the triage method + red-flag reference
+skills/triage/                 how the main agent runs and combines the triage panel
+subagents/                     the three specialists: assess, challenge, ask
 family/                        the household's memory (markdown, git-friendly)
 ```
 
@@ -20,10 +21,14 @@ family/                        the household's memory (markdown, git-friendly)
 - **eve (Vercel):** the fewest lines of code, since an agent is mostly markdown and comes with sandboxes, schedules and durability. But its hooks can only observe, so nothing in it can replace the agent's final reply, which a deterministic message needs.
 - **pi-durable:** a minimal durable harness: crash-safe conversations, tasks and state with the four coding tools (read, write, edit, bash).
 
-**2. A main agent and one task agent** (the pattern from Instinct and Claude Code):
-- **Main agent:** has the personality and handles the conversation. It owns memory and decides who and which episode a message is about. It's also the **checker** and is **proactive**: it compares triage's result with the whole household's history (it may raise the level, never lower it without new facts), checks in on open follow-ups, and notices patterns across members. It asks triage's questions in its own words and **checks triage's verdict before acting**: was enough gathered, is the level supported by what the parent said, is it proportionate. It's the only one that escalates.
-- **Worker Agent:** a **fork** subagent. It inherits the conversation, prompt, memory and skills, so nothing has to be re-explained. It follows one skill: *check → gather → analyse → record*. It formulates the clinical follow-up questions (each with why it matters), can look up current guidance with web search, keeps its working state in the episode's `## Triage` section, and returns either questions or a level with its reason, evidence and trend. It never talks to the user.
-- **No per-step subagents or separate verifier.** The steps depend on each other, forks can't start further subagents, and a model follows a short checklist reliably. Splitting it would add hand-offs without benefit.
+**2. A main agent and a triage panel** (the pattern from Instinct and Claude Code):
+- **Main agent:** has the personality and handles the conversation. It owns memory and decides who and which episode a message is about. It's also the **checker** and is **proactive**: it combines the panel's results with the whole household's history, checks in on open follow-ups, and notices patterns across members. It asks the panel's questions in its own words and **checks the decision before acting**: was enough gathered, is the level supported by what the parent said, is it proportionate. It's the only one that escalates.
+- **Triage panel:** three isolated subagents that each do one job on the episode, run in parallel as ordinary `task` calls:
+  - `assess`: how likely home, doctor and emergency are, the leading concern and the reason;
+  - `challenge`: the case for more urgent and for less urgent, and which unknowns would change the level;
+  - `ask`: the up-to-3 questions that would most change the level.
+
+  They see the episode, the member file and the `home-care` reference, not the chat, so each view is independent, the way a doctor reads a referral. The main agent writes the parent's facts into the episode first, then combines the three: a red flag means emergency now; one level at 0.8 or above with nothing open means conclude; otherwise ask, within about 6 questions per episode. The `triage` skill holds this recipe.
 
 > [!NOTE]
 > **Next experiment: dynamic workflows instead of predefined subagents.** Rather than fixing the split in advance, let the agent write the workflow itself, the way Claude's dynamic workflows do: for each case it decides how to break the work into steps (gather, assess, check, record), starts them, and combines the results. Deep Agents' dynamic subagents are a smaller step in that direction.
