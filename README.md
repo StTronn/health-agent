@@ -22,9 +22,9 @@ family/                        the household's memory (markdown, git-friendly)
 - **pi-durable:** a minimal durable harness: crash-safe conversations, tasks and state with the four coding tools (read, write, edit, bash).
 
 **2. A main agent and a triage panel** (the pattern from Instinct and Claude Code):
-- **Main agent:** has the personality and handles the conversation. It owns memory and decides who and which episode a message is about. It's also the **checker** and is **proactive**: it combines the panel's results with the whole household's history, checks in on open follow-ups, and notices patterns across members. It asks the panel's questions in its own words and **checks the decision before acting**: was enough gathered, is the level supported by what the parent said, is it proportionate. It's the only one that escalates.
+- **Main agent:** has the personality and handles the conversation. It owns memory and decides who and which episode a message is about. It's also the **checker** and is **proactive**: it combines the panel's results with the whole household's history, checks in on open follow-ups, and notices patterns across members. It asks the panel's questions in its own words and **checks the decision before acting**: was enough gathered, is the level supported by what the parent said, is it proportionate, plus a short checklist (right person, a real episode, facts match the member file, reason grounded in the reference, question budget kept). It's the only one that escalates.
 - **Triage panel:** three isolated subagents that each do one job on the episode, run in parallel as ordinary `task` calls:
-  - `assess`: how likely home, doctor and emergency are, the leading concern and the reason;
+  - `assess`: how likely home, doctor and emergency are, updated from the last assessment rather than started fresh (with what moved them), plus the leading concern and the reason;
   - `challenge`: the case for more urgent and for less urgent, and which unknowns would change the level;
   - `ask`: the up-to-3 questions that would most change the level.
 

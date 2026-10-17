@@ -27,6 +27,7 @@ A parent would rather answer a few good questions than get a guess or a needless
    - Was enough gathered? Duration, severity, red flags and risk context are known or deliberately not needed.
    - Is the level supported by facts the parent actually gave?
    - Is it proportionate? An unknown that doesn't change the level is a question or a follow-up, not a referral.
+   - **Checklist:** the episode is filed under the right person; it's a real episode, not a general question; the facts match the member file (age, weight, allergies, medicines); the reason rests on a `home-care` criterion; the question budget is respected; `MEMORY.md` lists open episodes correctly.
 4. **Act.** `home`: care steps, the specific signs to come back for, and what you'll check next time. `doctor` or `emergency`: call `escalate` alone; its fixed message is the whole reply.
 
 Only escalate without the panel when the first message is an obvious emergency (not breathing, unresponsive, chest pain, stroke signs, severe bleeding, seizure).
