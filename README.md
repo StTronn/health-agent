@@ -15,6 +15,47 @@ subagents/                     the three specialists: assess, challenge, ask
 family/                        the household's memory (markdown, git-friendly)
 ```
 
+## How a turn works
+
+```mermaid
+flowchart TD
+    U([Message from a parent<br/>or a presenting clinician]) --> M
+
+    subgraph MAIN["Main agent · SOUL.md + prompt.md"]
+        M[Who is it about? Which episode?<br/>MEMORY.md is already in context] --> W[Write the new facts<br/>into the episode]
+        W --> Q{New or changed<br/>symptoms?}
+        Q -- no --> G[Answer directly from memory<br/>or web search]
+    end
+
+    Q -- yes --> P
+    subgraph P["Triage panel · three isolated subagents, run in parallel"]
+        A["assess<br/>differential + home / doctor / emergency,<br/>updated from the last note"]
+        C["challenge<br/>more urgent? less urgent?<br/>what argues against the leading cause?"]
+        K["ask<br/>up to 3 next steps:<br/>questions or tests"]
+    end
+    F[(Episode file + member file<br/>+ home-care reference)] -.-> A & C & K
+
+    A & C & K --> CB{Combine}
+    CB -- "red flag" --> E[escalate: emergency]
+    CB -- "top level or cause ≥ 0.8,<br/>nothing open" --> CK
+    CB -- "otherwise" --> AS[Ask the next steps<br/>in its own words]
+
+    CK[Check + checklist:<br/>enough gathered? supported? proportionate?<br/>right person? real episode?] --> ACT{Act}
+    ACT -- home --> H[Care steps + warning signs<br/>+ what to check next]
+    ACT -- doctor --> D[escalate: doctor]
+    ACT -- clinician --> DX[Write ## Diagnosis]
+
+    E & D --> B
+    H & AS & G & DX --> B
+    B[["Backstop · code<br/>fixed text after escalate ·<br/>red-flag rules + Jev on missed emergencies"]] --> R([Reply])
+    E & D -.-> HO[(handoffs.md)]
+```
+
+- **The main agent** owns the conversation, memory, the check and every action. It is the only one that talks to the person or calls `escalate`.
+- **The panel** sees the episode, the member file and the `home-care` reference, never the chat, so each specialist judges independently, the way a doctor reads a referral. That's why the main agent writes the facts down first.
+- **The `## Triage` note** in the episode carries the probabilities, the differential and the questions used from one round to the next, so each `assess` updates the last view instead of starting over.
+- **Code has the last word on safety**: `escalate` returns the fixed messages and logs the handoff, and the backstop forces that text or catches a missed red flag.
+
 ## Design decisions
 
 **1. A coding-agent harness: deepagents.** The agent needs a sandbox, files, skills, subagents and summarisation of long conversations, and deepagents provides all of them. LangGraph underneath gives durability, and LangGraph's server adds queueing, cron and delayed runs when needed (none are needed for this demo). I considered two alternatives:
