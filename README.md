@@ -32,29 +32,9 @@ family/                        the household's memory (markdown, git-friendly)
 
 Every message runs one turn of the main agent; symptom cases run the panel once per turn, so a case is a loop across turns that ends in a decision.
 
-```mermaid
-flowchart TD
-    U([Message]) --> O[1. Orient: who, which episode, what's new<br/>MEMORY.md already in context]
-    O --> R[2. Record the new facts in the episode]
-    R --> S{New or changed symptoms?}
-    S -- no --> GQ[Answer from memory or web search]
-    S -- yes --> PN
+![Agent anatomy: the main agent records facts, runs three isolated specialists in parallel that read only the files and reference, combines their verdicts, and every reply passes through code guardrails](docs/agent-anatomy.svg)
 
-    subgraph PN["3. Panel: three isolated subagents in parallel, reading the episode + reference"]
-        A[assess: differential + level probabilities,<br/>updated from the last note]
-        C[challenge: more urgent? less urgent?<br/>evidence against the leading cause]
-        K[ask: up to 3 questions or tests<br/>that would change the decision most]
-    end
-
-    PN --> CB{4. Combine}
-    CB -- red flag --> EM[escalate: emergency]
-    CB -- "not decided yet" --> AQ[Ask the next steps]
-    CB -- "≥ 0.8, nothing open" --> CK[5. Check + checklist]
-    CK -- passes --> ACT[6. Act: home care · escalate doctor · write diagnosis]
-    CK -- gap --> AQ
-    AQ -. next message .-> U
-    EM & ACT & GQ & AQ --> BS[[7. Backstop: fixed text · missed red flags]] --> OUT([Reply])
-```
+![Decision loop: any red flag sends it out at once; one level at 0.8 or above with nothing open is checked and acted on; otherwise the agent asks, and the answers start the next round](docs/decision-loop.svg)
 
 1. **Orient.** Work out who the message is about and which episode it belongs to, from names, aliases and what's open. If two readings would lead to different advice, ask.
 2. **Record.** Write the new facts into the episode first, because the panel only sees files.

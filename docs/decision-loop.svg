@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 400" role="img" aria-label="Decision loop: after facts are recorded, the panel's combined view leads to an immediate emergency on any red flag, to a checked decision when one level reaches 0.8 with nothing open, and otherwise to focused questions whose answers start the next round.">
+      <style>
+svg{font-family:'IBM Plex Sans',-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#1d2522}
+.bg{fill:#ffffff}
+.box{fill:#ffffff;stroke:#1d2522;stroke-width:1.2}
+.group{fill:#e6efeb;stroke:#cfd8d4;stroke-width:1}
+.codebox{fill:#fbeee5;stroke:#b4561f;stroke-width:1.4}
+.files{fill:#ffffff;stroke:#1d2522;stroke-width:1.2;stroke-dasharray:4 3}
+.t{fill:#1d2522;font-size:13px}.tb{fill:#1d2522;font-size:14px;font-weight:600}
+.ts{fill:#5c6a64;font-size:11.5px}.tm{fill:#1d2522;font-family:'IBM Plex Mono',ui-monospace,Menlo,monospace;font-size:12px}
+.tc{fill:#b4561f;font-size:14px;font-weight:600}.lbl{fill:#5c6a64;font-size:11.5px;font-style:italic}
+.edge{stroke:#1d2522;stroke-width:1.3;fill:none}.dash{stroke-dasharray:5 4}
+.edge-code{stroke:#b4561f;stroke-width:1.5;fill:none}.emerg{stroke:#b3261e;stroke-width:1.5;fill:none}
+.temerg{fill:#b3261e;font-size:13px;font-weight:600}.emergbox{fill:#ffffff;stroke:#b3261e;stroke-width:1.5}
+.okbox{fill:#ffffff;stroke:#2f7a43;stroke-width:1.5}.tok{fill:#2f7a43;font-size:13px;font-weight:600}
+</style><rect class="bg" x="0" y="0" width="980" height="400" rx="12"/><defs>
+        <marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1d2522"/></marker>
+        <marker id="be" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b3261e"/></marker>
+      </defs>
+
+      <rect class="box" x="20" y="160" width="150" height="60" rx="10"/>
+      <text class="tb" x="95" y="186" text-anchor="middle">Facts recorded</text>
+      <text class="ts" x="95" y="205" text-anchor="middle">in the episode</text>
+
+      <rect class="group" x="215" y="150" width="170" height="80" rx="10"/>
+      <text class="tb" x="300" y="180" text-anchor="middle">Panel round</text>
+      <text class="ts" x="300" y="199" text-anchor="middle">assess starts from</text>
+      <text class="ts" x="300" y="214" text-anchor="middle">the last note's odds</text>
+
+      <polygon class="box" points="500,130 580,190 500,250 420,190"/>
+      <text class="tb" x="500" y="195" text-anchor="middle">Combine</text>
+
+      <rect class="emergbox" x="630" y="22" width="200" height="56" rx="10"/>
+      <text class="temerg" x="730" y="46" text-anchor="middle">Emergency now</text>
+      <text class="ts" x="730" y="64" text-anchor="middle">fixed message · logged</text>
+
+      <rect class="box" x="630" y="160" width="150" height="60" rx="10"/>
+      <text class="tb" x="705" y="186" text-anchor="middle">Check</text>
+      <text class="ts" x="705" y="205" text-anchor="middle">+ checklist</text>
+
+      <rect class="okbox" x="820" y="150" width="145" height="80" rx="10"/>
+      <text class="tok" x="892" y="176" text-anchor="middle">Act</text>
+      <text class="ts" x="892" y="196" text-anchor="middle">home care</text>
+      <text class="ts" x="892" y="211" text-anchor="middle">escalate doctor</text>
+      <text class="ts" x="892" y="226" text-anchor="middle">## Diagnosis (clinician)</text>
+
+      <rect class="box" x="420" y="300" width="160" height="60" rx="10"/>
+      <text class="tb" x="500" y="326" text-anchor="middle">Ask</text>
+      <text class="ts" x="500" y="345" text-anchor="middle">1–3 decisive next steps</text>
+
+      <line class="edge" x1="170" y1="190" x2="213" y2="190" marker-end="url(#b)"/>
+      <line class="edge" x1="385" y1="190" x2="418" y2="190" marker-end="url(#b)"/>
+
+      <polyline class="emerg" points="500,130 500,50 628,50" marker-end="url(#be)"/>
+      <text class="lbl" x="508" y="100">any red flag</text>
+
+      <line class="edge" x1="580" y1="190" x2="628" y2="190" marker-end="url(#b)"/>
+      <text class="lbl" x="586" y="248">≥ 0.8 and</text>
+      <text class="lbl" x="586" y="262">nothing open</text>
+      <line class="edge" x1="780" y1="190" x2="818" y2="190" marker-end="url(#b)"/>
+      <text class="lbl" x="784" y="180">passes</text>
+
+      <polyline class="edge" points="705,220 705,330 582,330" marker-end="url(#b)"/>
+      <text class="lbl" x="712" y="280">gap found</text>
+
+      <line class="edge" x1="500" y1="250" x2="500" y2="298" marker-end="url(#b)"/>
+      <text class="lbl" x="508" y="280">otherwise</text>
+
+      <polyline class="edge dash" points="420,330 95,330 95,222" marker-end="url(#b)"/>
+      <text class="lbl" x="150" y="350">next message: the answers become new facts</text>
+    </svg>
