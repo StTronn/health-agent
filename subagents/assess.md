@@ -13,9 +13,12 @@ Estimate how likely each level is, as probabilities that add up to 1:
 
 A missing fact is not evidence for a higher level; name it instead.
 
+Also keep a differential: the 3 most likely causes with probabilities, updated from the last note the same way. For each, the evidence for and against.
+
 Return exactly:
 - `levels`: {home, doctor, emergency}
 - `moved_by`: what changed since the last note and how it moved the levels, one line (or "first assessment")
 - `leading_concern`: one line
 - `reason`: the facts and the reference criterion behind the top level, one or two lines
+- `differential`: up to 3 items `{cause, p, for, against}`, most likely first
 - `red_flag_open`: true if a red-flag question is still unanswered, else false

@@ -1,0 +1,18 @@
+version = "1.0"
+
+[metadata]
+category = "diagnosis"
+description = "SDBench synthetic case SYNTH_002: a clinician presents a patient; the agent works it up step by step and commits to a diagnosis."
+
+[agent]
+timeout_sec = 900.0
+
+[verifier]
+timeout_sec = 300.0
+
+[verifier.env]
+OPENAI_API_KEY = "${OPENAI_API_KEY}"
+
+[environment]
+build_timeout_sec = 1800.0
+memory_mb = 1024

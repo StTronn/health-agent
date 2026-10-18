@@ -24,9 +24,9 @@ family/                        the household's memory (markdown, git-friendly)
 **2. A main agent and a triage panel** (the pattern from Instinct and Claude Code):
 - **Main agent:** has the personality and handles the conversation. It owns memory and decides who and which episode a message is about. It's also the **checker** and is **proactive**: it combines the panel's results with the whole household's history, checks in on open follow-ups, and notices patterns across members. It asks the panel's questions in its own words and **checks the decision before acting**: was enough gathered, is the level supported by what the parent said, is it proportionate, plus a short checklist (right person, a real episode, facts match the member file, reason grounded in the reference, question budget kept). It's the only one that escalates.
 - **Triage panel:** three isolated subagents that each do one job on the episode, run in parallel as ordinary `task` calls:
-  - `assess`: how likely home, doctor and emergency are, updated from the last assessment rather than started fresh (with what moved them), plus the leading concern and the reason;
-  - `challenge`: the case for more urgent and for less urgent, and which unknowns would change the level;
-  - `ask`: the up-to-3 questions that would most change the level.
+  - `assess`: a differential (the 3 likeliest causes) and how likely home, doctor and emergency are, both updated from the last assessment rather than started fresh (with what moved them), plus the leading concern and the reason;
+  - `challenge`: the case for more urgent and for less urgent, the evidence against the leading cause, and which unknowns would change the level;
+  - `ask`: the up-to-3 next steps (questions or tests) that would most change the level or separate the leading causes.
 
   They see the episode, the member file and the `home-care` reference, not the chat, so each view is independent, the way a doctor reads a referral. The main agent writes the parent's facts into the episode first, then combines the three: a red flag means emergency now; one level at 0.8 or above with nothing open means conclude; otherwise ask, within about 6 questions per episode. The `triage` skill holds this recipe.
 
@@ -104,6 +104,10 @@ Six chats over a week as a stomach bug moves through the house.
 4. **Thursday.** The child is better: close his episode and correct his weight. Priya now has a sore throat herself, which is a new episode with home care.
 5. **Friday.** A vaccine question about the child, plus a brief check on Priya's throat.
 6. **Saturday.** "He's still a bit off": the agent must work out or ask whether that means the child or grandpa before writing anything, then close the last open episode.
+
+### Diagnosis cases (SDBench-style)
+
+`evals/sdbench/` holds three synthetic cases from SDBench, each a single-step Harbor task. A simulated attending presents the patient and reveals history, examination and test results only when asked or ordered. The agent works the case up with the panel and commits to a diagnosis, which the judge scores 1–5 against the reference (4 or more counts as correct). With a family the agent still never presents a diagnosis as certain; with a clinician it commits.
 
 Each case's README shows an example conversation for every session. Adding a session is a new `steps/session-N/` folder, and adding a check is one more line in `judge.toml`.
 

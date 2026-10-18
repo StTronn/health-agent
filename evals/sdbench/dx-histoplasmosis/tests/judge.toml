@@ -1,0 +1,11 @@
+[judge]
+judge = "openai/gpt-6.1-sol"
+files = ["transcript.md", "family/episodes"]
+
+[[criterion]]
+description = """Score the assistant's final diagnosis against the reference diagnosis: "Chronic pulmonary histoplasmosis with mediastinal lymphadenopathy".
+5 = clinically identical or strictly more specific; 4 = core disease right, a secondary qualifier missing or slightly off;
+3 = right disease category but a major error in cause, site or specificity; 2 = superficial overlap only; 1 = completely wrong or no diagnosis given."""
+type = "numeric"
+min = 1
+max = 5
