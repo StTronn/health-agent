@@ -15,46 +15,65 @@ subagents/                     the three specialists: assess, challenge, ask
 family/                        the household's memory (markdown, git-friendly)
 ```
 
-## How a turn works
+## How the agent works
+
+### Anatomy
+
+| Part | What it is | Where |
+|---|---|---|
+| **Main agent** | The one the person talks to. Owns the conversation, the household's memory, the final check and every action. Only it replies or calls `escalate`. | `SOUL.md` (who it is) + `prompt.md` (how it works) |
+| **Triage panel** | Three isolated subagents, each doing one job on an episode. They read files, never the chat. | `subagents/assess.md`, `challenge.md`, `ask.md` |
+| **Skills** | `triage` is the main agent's recipe for running and combining the panel; `home-care` is the reference everyone checks against (red flags, common complaints, risk, medicines). | `skills/` |
+| **Memory** | Markdown files: the `MEMORY.md` index (always in context), one file per person, one per episode. Each episode carries a `## Triage` note: the latest probabilities, differential, questions asked, and decision. | `family/` |
+| **Tools** | File tools and shell from the sandbox, web search, and one custom tool: `escalate`. | `agent.py` |
+| **Guardrails** | Code that runs whatever the model decides: fixed escalation messages, handoff log, and a backstop for missed red flags. | `guardrails/` |
+
+### The loop
+
+Every message runs one turn of the main agent; symptom cases run the panel once per turn, so a case is a loop across turns that ends in a decision.
 
 ```mermaid
 flowchart TD
-    U([Message from a parent<br/>or a presenting clinician]) --> M
+    U([Message]) --> O[1. Orient: who, which episode, what's new<br/>MEMORY.md already in context]
+    O --> R[2. Record the new facts in the episode]
+    R --> S{New or changed symptoms?}
+    S -- no --> GQ[Answer from memory or web search]
+    S -- yes --> PN
 
-    subgraph MAIN["Main agent · SOUL.md + prompt.md"]
-        M[Who is it about? Which episode?<br/>MEMORY.md is already in context] --> W[Write the new facts<br/>into the episode]
-        W --> Q{New or changed<br/>symptoms?}
-        Q -- no --> G[Answer directly from memory<br/>or web search]
+    subgraph PN["3. Panel: three isolated subagents in parallel, reading the episode + reference"]
+        A[assess: differential + level probabilities,<br/>updated from the last note]
+        C[challenge: more urgent? less urgent?<br/>evidence against the leading cause]
+        K[ask: up to 3 questions or tests<br/>that would change the decision most]
     end
 
-    Q -- yes --> P
-    subgraph P["Triage panel · three isolated subagents, run in parallel"]
-        A["assess<br/>differential + home / doctor / emergency,<br/>updated from the last note"]
-        C["challenge<br/>more urgent? less urgent?<br/>what argues against the leading cause?"]
-        K["ask<br/>up to 3 next steps:<br/>questions or tests"]
-    end
-    F[(Episode file + member file<br/>+ home-care reference)] -.-> A & C & K
-
-    A & C & K --> CB{Combine}
-    CB -- "red flag" --> E[escalate: emergency]
-    CB -- "top level or cause ≥ 0.8,<br/>nothing open" --> CK
-    CB -- "otherwise" --> AS[Ask the next steps<br/>in its own words]
-
-    CK[Check + checklist:<br/>enough gathered? supported? proportionate?<br/>right person? real episode?] --> ACT{Act}
-    ACT -- home --> H[Care steps + warning signs<br/>+ what to check next]
-    ACT -- doctor --> D[escalate: doctor]
-    ACT -- clinician --> DX[Write ## Diagnosis]
-
-    E & D --> B
-    H & AS & G & DX --> B
-    B[["Backstop · code<br/>fixed text after escalate ·<br/>red-flag rules + Jev on missed emergencies"]] --> R([Reply])
-    E & D -.-> HO[(handoffs.md)]
+    PN --> CB{4. Combine}
+    CB -- red flag --> EM[escalate: emergency]
+    CB -- "not decided yet" --> AQ[Ask the next steps]
+    CB -- "≥ 0.8, nothing open" --> CK[5. Check + checklist]
+    CK -- passes --> ACT[6. Act: home care · escalate doctor · write diagnosis]
+    CK -- gap --> AQ
+    AQ -. next message .-> U
+    EM & ACT & GQ & AQ --> BS[[7. Backstop: fixed text · missed red flags]] --> OUT([Reply])
 ```
 
-- **The main agent** owns the conversation, memory, the check and every action. It is the only one that talks to the person or calls `escalate`.
-- **The panel** sees the episode, the member file and the `home-care` reference, never the chat, so each specialist judges independently, the way a doctor reads a referral. That's why the main agent writes the facts down first.
-- **The `## Triage` note** in the episode carries the probabilities, the differential and the questions used from one round to the next, so each `assess` updates the last view instead of starting over.
-- **Code has the last word on safety**: `escalate` returns the fixed messages and logs the handoff, and the backstop forces that text or catches a missed red flag.
+1. **Orient.** Work out who the message is about and which episode it belongs to, from names, aliases and what's open. If two readings would lead to different advice, ask.
+2. **Record.** Write the new facts into the episode first, because the panel only sees files.
+3. **Panel.** Call `assess`, `challenge` and `ask` together on the episode.
+4. **Combine** their results into one next move (see below).
+5. **Check.** Before acting on a decision, the main agent reviews it like a second clinician, plus a short checklist.
+6. **Act.** Home care, `escalate`, or (with a clinician) a written diagnosis; and update the `## Triage` note, follow-ups and `MEMORY.md`.
+7. **Backstop.** Code runs after every turn: an escalation always ends on its fixed message, and a missed red flag still triggers the emergency message.
+
+If the panel isn't sure yet, the turn ends with focused questions, and the parent's answer starts the next round. Each round's `assess` starts from the last note's probabilities, so the view sharpens over the conversation instead of resetting.
+
+### How decisions are made
+
+- **Evidence, not caution.** Levels are probabilities over home / doctor / emergency, grounded in criteria from the `home-care` reference (red flags, "see a doctor if", risk by age and condition). A missing fact is a question or a follow-up, never a reason to escalate.
+- **Red flag → emergency, immediately.** A red flag from the panel, an obvious emergency in the first message, or the code backstop all lead to the same fixed emergency message.
+- **Conclude at 0.8.** When one level (or, with a clinician, one cause) reaches 0.8, no red-flag question is open, and `challenge` names nothing that would change it, the panel's view becomes a decision.
+- **Otherwise ask.** The next steps are the questions or tests that would move the probabilities most, never anything already known, about 6 questions per episode before deciding on what's there.
+- **Two views must agree.** The panel proposes; the main agent checks (enough gathered, supported by what was said, proportionate, right person, a real episode) and can ask more or send it back once.
+- **Code decides the wording.** Doctor and emergency outcomes always reach the person as the fixed messages, logged to `handoffs.md`.
 
 ## Design decisions
 
