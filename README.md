@@ -10,7 +10,8 @@ The whole design rests on one bet: **give a strong model a few powerful building
 src/agent/            the agent, platform-free: wiring, prompt sections, the backstop
   tools/              files · triage (fork) · escalate · schedule · browse · web_search
 src/host/             Cloudflare: the Worker and one Durable Object per household
-src/channels/         how families reach it: http (JSON API), web (/chat page)
+src/channels/         how families reach it: http (JSON API, optional NDJSON streaming)
+web/                  chat app (shadcn/ui + AI Elements): streaming replies, live activity, memory panel
 cli/                  chat from the terminal against local dev or the deployed URL
 SOUL.md, prompt.md    who it is / how it works
 skills/               triage method, home-care reference, errands (labs, medicines)
@@ -24,7 +25,7 @@ evals/                Harbor tasks: a simulated parent talks to the deployed age
 
 **Proactive by itself.** The agent schedules its own check-ins (`schedule`): a durable task sleeps until then, the Durable Object's alarm wakes it, the agent re-reads memory and either messages the family (the outbox, delivered by the channels) or stays quiet (`NO_REPLY`).
 
-**Errands in a cloud browser.** `browse` drives [Browser Use Cloud](https://browser-use.com): one browser profile per household keeps its logins, one session keeps pages open across steps. When a site needs something (a login, a code, a choice), the agent asks the family in chat and carries on; the session's live view link is for paying. It never books or pays without an explicit yes, and isn't replayed after a crash, so nothing is booked twice.
+**Errands in a cloud browser.** `browse` drives [Browser Use Cloud](https://browser-use.com): one browser profile per household keeps its logins, one session keeps pages open across steps. Each run starts from what we know about the site: a built-in playbook (`skills/errands/sites/`) plus what this household's earlier runs learned (`family/sites/`), which the agent updates after every errand. The main agent manages the browser: it retries with sharper instructions instead of accepting the first failure, and when a site needs something (a login, a code, a choice) it asks the family in chat and carries on; the session's live view link is for paying. It never books or pays without an explicit yes, and isn't replayed after a crash, so nothing is booked twice.
 
 **2. A main agent and one task agent** (the pattern from Instinct and Claude Code):
 - **Main agent:** has the personality and handles the conversation. It owns memory and decides who and which episode a message is about. It's also the **checker** and is **proactive**: it compares triage's result with the whole household's history (it may raise the level, never lower it without new facts), checks in on open follow-ups, and notices patterns across members. It asks triage's questions in its own words and **checks triage's verdict before acting**: was enough gathered, is the level supported by what the parent said, is it proportionate. It's the only one that escalates.
@@ -116,7 +117,7 @@ node cli/chat.ts demo                    # chat from the terminal (AGENT_URL def
 
 pnpm run deploy                           # build + wrangler deploy
 pnpm exec wrangler secret bulk secrets.json   # OPENAI_API_KEY, BROWSER_USE_API_KEY, API_TOKEN
-# chat in the browser: https://<worker>.workers.dev/chat#household=<name>&token=<API_TOKEN>
+# chat in the browser: https://<worker>.workers.dev (local: http://localhost:8788), sign in with a household name + API_TOKEN
 
 AGENT_URL=https://<worker>.workers.dev AGENT_TOKEN=<API_TOKEN> \
 harbor run -y -p evals/tasks -a langgraph -m openai/gpt-6.1-sol -n 3 \
@@ -126,3 +127,6 @@ harbor view ../medical-harbor-jobs
 ```
 
 Each eval trial gets a fresh household seeded from `family/`. Run output goes outside the repo because Harbor's LangGraph agent copies the project folder into the run's output folder.
+
+> [!NOTE]
+> Access is a single shared key (`API_TOKEN`) for testing; real use needs per-user sign-in with a user → household mapping (e.g. Cloudflare Access, or phone OTP), plus a spend cap per household. Durable Objects need the Workers Paid plan beyond light testing: the free tier's daily row-read quota runs out quickly with evals.
