@@ -1,7 +1,7 @@
 # Medicines
 
 ## Zepto — https://www.zepto.com
-- Quick delivery (minutes) for over-the-counter items: paracetamol, ORS, thermometers, plasters. Not for prescription-only medicines.
+- Quick delivery (minutes): over-the-counter items (paracetamol, ORS, thermometers, plasters), and prescription medicines when the family has a prescription. Add them to the cart; the family uploads the prescription and pays themselves through the live view link.
 - Asks to "Select Location" before showing any products: set the address first. Login is phone number + OTP.
 - (Add what you learn from each run: flow order, quirks, where it asks for what.)
 

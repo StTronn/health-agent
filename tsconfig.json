@@ -1,0 +1,34 @@
+{
+  "compilerOptions": {
+    "target": "es2024",
+    "module": "es2022",
+    "moduleResolution": "bundler",
+    "lib": [
+      "es2024"
+    ],
+    "types": [
+      "@cloudflare/workers-types",
+      "vite/client",
+      "@cloudflare/computer/vite/client"
+    ],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./web/*"
+      ]
+    }
+  },
+  "include": [
+    "src",
+    "cli",
+    "worker-configuration.d.ts"
+  ],
+  "exclude": [
+    "web"
+  ]
+}

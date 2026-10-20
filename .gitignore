@@ -4,3 +4,7 @@ __pycache__/
 jobs/
 evals/out/
 family/.browser/
+node_modules/
+.dev.vars
+.wrangler/
+dist/

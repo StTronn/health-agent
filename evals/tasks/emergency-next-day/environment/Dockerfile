@@ -5,7 +5,7 @@ ENV UV_HTTP_TIMEOUT=120
 # Warm uv's cache once at build time so each trial's agent and verifier installs are local.
 RUN uv python install 3.13 \
     && uv venv /tmp/warm --python 3.13 \
-    && uv pip install --python /tmp/warm langgraph python-dotenv "deepagents>=0.7.25" langchain-openai typesafe-sdk \
+    && uv pip install --python /tmp/warm langgraph python-dotenv langchain langchain-openai httpx \
     && rm -rf /tmp/warm \
     && uvx --from 'harbor-rewardkit==0.2.*' rewardkit --help > /dev/null
 WORKDIR /app
