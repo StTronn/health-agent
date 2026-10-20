@@ -7,18 +7,25 @@ A small agent for one household's health conversations. It works out who and wha
 The whole design rests on one bet: **give a strong model a few powerful building blocks, and put behaviour in files rather than code.** That means a coding agent's sandbox (files plus a shell), markdown memory, a soul and a prompt, and skills, with as few custom tools as possible and only a thin layer of code where determinism is required.
 
 ```
-agent.py              31 LOC   main agent + triage fork + one tool + one guardrail
-guardrails/           75 LOC   fixed messages, escalate tool, backstop (rules + Jev)
-SOUL.md, prompt.md             who it is / how it works
-skills/triage/                 the triage method + red-flag reference
-family/                        the household's memory (markdown, git-friendly)
+src/agent/            the agent, platform-free: wiring, prompt sections, the backstop
+  tools/              files · triage (fork) · escalate · schedule · browse · web_search
+src/host/             Cloudflare: the Worker and one Durable Object per household
+src/channels/         how families reach it: http (JSON API, optional NDJSON streaming)
+web/                  chat app (shadcn/ui + AI Elements): streaming replies, live activity, memory panel
+cli/                  chat from the terminal against local dev or the deployed URL
+SOUL.md, prompt.md    who it is / how it works
+skills/               triage method, home-care reference, errands (labs, medicines)
+family/               the seed household's memory (markdown); each household gets its own copy
+evals/                Harbor tasks: a simulated parent talks to the deployed agent
 ```
 
 ## Design decisions
 
-**1. A coding-agent harness: deepagents.** The agent needs a sandbox, files, skills, subagents and summarisation of long conversations, and deepagents provides all of them. LangGraph underneath gives durability, and LangGraph's server adds queueing, cron and delayed runs when needed (none are needed for this demo). I considered two alternatives:
-- **eve (Vercel):** the fewest lines of code, since an agent is mostly markdown and comes with sandboxes, schedules and durability. But its hooks can only observe, so nothing in it can replace the agent's final reply, which a deterministic message needs.
-- **pi-durable:** a minimal durable harness: crash-safe conversations, tasks and state with the four coding tools (read, write, edit, bash).
+**1. A durable harness on Cloudflare: [pi-durable](https://earendil.com/posts/pi-durable/) in a Durable Object per household.** Every model turn, tool call and wakeup is committed to the object's SQLite before anything is shown, so a crash or redeploy resumes where it stopped; the object sleeps when the family is quiet and wakes for a message or its alarm. The family's files live in the same SQLite through [Cloudflare Computer](https://github.com/cloudflare/computer), whose read/ls/find/grep/write/edit tools the agent uses; a shell (in-Worker bash or a full container) can later be added over the same files. The agent code (`src/agent/`) doesn't know about Cloudflare; the host gives it a workspace and a way to wake up. Earlier versions used deepagents (Python/LangGraph); I also considered eve (Vercel), whose hooks can only observe, so nothing can replace the agent's final reply.
+
+**Proactive by itself.** The agent schedules its own check-ins (`schedule`): a durable task sleeps until then, the Durable Object's alarm wakes it, the agent re-reads memory and either messages the family (the outbox, delivered by the channels) or stays quiet (`NO_REPLY`).
+
+**Errands in a cloud browser.** `browse` drives [Browser Use Cloud](https://browser-use.com): one browser profile per household keeps its logins, one session keeps pages open across steps. Each run starts from what we know about the site: a built-in playbook (`skills/errands/sites/`) plus what this household's earlier runs learned (`family/sites/`), which the agent updates after every errand. The main agent manages the browser: it retries with sharper instructions instead of accepting the first failure, and when a site needs something (a login, a code, a choice) it asks the family in chat and carries on; the session's live view link is for paying. It never books or pays without an explicit yes, and isn't replayed after a crash, so nothing is booked twice.
 
 **2. A main agent and one task agent** (the pattern from Instinct and Claude Code):
 - **Main agent:** has the personality and handles the conversation. It owns memory and decides who and which episode a message is about. It's also the **checker** and is **proactive**: it compares triage's result with the whole household's history (it may raise the level, never lower it without new facts), checks in on open follow-ups, and notices patterns across members. It asks triage's questions in its own words and **checks triage's verdict before acting**: was enough gathered, is the level supported by what the parent said, is it proportionate. It's the only one that escalates.
@@ -43,11 +50,7 @@ family/                        the household's memory (markdown, git-friendly)
 - **`escalate(level)`** returns a fixed message, which ends the turn so the model can't rephrase it. It also logs the case to `family/handoffs.md`, which stands in for the doctor queue: routing done in code.
 
 > [!IMPORTANT]
-> **The backstop** (`after_agent` middleware) runs at the end of every turn. If the agent escalated, the reply is forced to the exact fixed text. If the agent missed a red flag, a check can still trigger the emergency message:
-> - `rules.py`: a deterministic regex of phrases that always mean emergency, with negation handled.
-> - `jev.py`: a model-based Jev check ("is this an emergency right now?"), skipped if no key is set.
->
-> Further checks are just functions added to `CHECKS`. Code reports or stops; it never tries to fix the agent's reasoning.
+> **The backstop** (`src/agent/guard.ts`) has the last word on every reply before it reaches a channel. If the agent escalated, the reply is the exact fixed text. If the agent missed a red flag, a deterministic regex of phrases that always mean emergency (negation handled) still triggers the emergency message. Further checks (a model-based Jev judgment once its TypeScript SDK exists) are one more line in `missedEmergency`. Code reports or stops; it never tries to fix the agent's reasoning.
 
 ## Home-care reference
 
@@ -60,10 +63,12 @@ family/                        the household's memory (markdown, git-friendly)
 
 | Out of scope | Where it plugs in |
 |---|---|
-| Lab report analysis | Files in `family/members/<x>/labs/` plus `skills/labs/`. No code: skills are discovered from the folder |
-| Custom knowledge base | Reference markdown inside a skill, or an MCP retrieval tool |
-| Telemedicine | Replace the body of `escalate`: the handoff already holds the case. Doctor approval via `interrupt_on` |
-| Scheduled check-ins and memory cleanup | LangGraph Agent Server cron, which reads the follow-ups in episode files |
+| Telegram, WhatsApp, Slack | One file in `src/channels/` (Vercel Chat SDK adapters), one line in `src/host/worker.ts`; it calls the household's `message` and drains its `outbox` |
+| Lab report analysis, scripts | Add a shell backend to the workspace (Cloudflare Computer: in-Worker bash or a container) over the same files, plus `skills/labs/` |
+| Custom knowledge base | Reference markdown inside a skill, or a retrieval tool |
+| Telemedicine | Replace the body of `escalate`: the handoff already holds the case |
+| Recurring check-ins, memory cleanup | Extend `schedule` with a recurrence (the pi-durable Cloudflare sample has one) |
+| Long errands without blocking the chat | Run `browse` as a background task that posts its result back to the conversation (pi-durable's background subagent pattern) |
 
 ## Evaluation
 
@@ -105,11 +110,23 @@ Each case's README shows an example conversation for every session. Adding a ses
 ## Run
 
 ```bash
-cp .env.example .env              # OPENAI_API_KEY, optional TYPESAFE_API_KEY
-uv run agent.py                   # chat as the account holder
-harbor run -p evals/tasks -a langgraph -m openai/gpt-6.1-sol -n 3 \
-  --ak project_path=. --ak graph=scenario --ak python_version=3.13 -o ../medical-harbor-jobs
+pnpm install
+cp .env.example .env                     # OPENAI_API_KEY, BROWSER_USE_API_KEY, API_TOKEN (any long random string)
+pnpm dev                                 # local Worker + Durable Objects (vite dev)
+node cli/chat.ts demo                    # chat from the terminal (AGENT_URL defaults to local dev)
+
+pnpm run deploy                           # build + wrangler deploy
+pnpm exec wrangler secret bulk secrets.json   # OPENAI_API_KEY, BROWSER_USE_API_KEY, API_TOKEN
+# chat in the browser: https://<worker>.workers.dev (local: http://localhost:8788), sign in with a household name + API_TOKEN
+
+AGENT_URL=https://<worker>.workers.dev AGENT_TOKEN=<API_TOKEN> \
+harbor run -y -p evals/tasks -a langgraph -m openai/gpt-6.1-sol -n 3 \
+  --ak project_path=. --ak graph=scenario --ak python_version=3.13 -o ../medical-harbor-jobs \
+  --ae AGENT_URL=$AGENT_URL --ae AGENT_TOKEN=$AGENT_TOKEN
 harbor view ../medical-harbor-jobs
 ```
 
-Run output goes outside the repo because Harbor's LangGraph agent copies the project folder into the run's output folder.
+Each eval trial gets a fresh household seeded from `family/`. Run output goes outside the repo because Harbor's LangGraph agent copies the project folder into the run's output folder.
+
+> [!NOTE]
+> Access is a single shared key (`API_TOKEN`) for testing; real use needs per-user sign-in with a user → household mapping (e.g. Cloudflare Access, or phone OTP), plus a spend cap per household. Durable Objects need the Workers Paid plan beyond light testing: the free tier's daily row-read quota runs out quickly with evals.

@@ -3,3 +3,8 @@ __pycache__/
 .env
 jobs/
 evals/out/
+family/.browser/
+node_modules/
+.dev.vars
+.wrangler/
+dist/
