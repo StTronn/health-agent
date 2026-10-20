@@ -1,6 +1,7 @@
 /** browse: one step of an errand in the family's cloud browser (Browser Use Cloud). One profile per
  * household keeps their logins; one session keeps pages open between calls until it expires. Both ids
  * live in a durable doc. Not replay-safe: a rerun could book or order twice. */
+import type { Workspace } from "@cloudflare/computer";
 import { Type } from "@earendil-works/pi-ai";
 import { defineDoc, defineTool, type ToolRegistration } from "@earendil-works/pi-durable";
 import { BrowserUse, type SessionResponse } from "browser-use-sdk/v3";
@@ -12,12 +13,28 @@ const RULES = `You act for a family on health sites (lab tests, medicines). Work
 Stop and report instead of guessing when you need: an OTP or password, a login, any detail the task didn't give,
 or a choice between options that matter (test package, slot, product, pack size). Never book, place an order or pay unless the
 task says the family has confirmed it. When you stop, report: where you are, what you found (names, prices, slots, totals),
-and exactly what you need next. Leave the page open; never close the tab.`;
+and exactly what you need next. Leave the page open; never close the tab.
+Sites can be slow: before deciding a page is blank or blocked, wait (up to 30 s), reload once, and try the site's own search URL.
+For a login, enter the phone number the task gives and request the OTP, then stop and report that you need the OTP.`;
 const TIMEOUT_MS = 15 * 60_000;
 
 const text = (t: string, isError = false) => ({ output: [{ type: "text" as const, text: t }], isError });
 
-export function createBrowseTool(apiKey: string): ToolRegistration {
+/** The playbook (skills/errands/sites/<site>.md) and this household's own notes (family/sites/<site>.md)
+ * for each site the task names, so every run starts from what earlier runs learned. */
+async function siteNotes(ws: Workspace, task: string): Promise<string> {
+  const sites = new Set([...task.matchAll(/(?:https?:\/\/)?(?:www\.)?([a-z0-9-]+)\.(?:com|in|co\.in|org)\b/gi)].map((m) => m[1]!.toLowerCase()));
+  const notes = [];
+  for (const site of sites) {
+    for (const path of [`/skills/errands/sites/${site}.md`, `/family/sites/${site}.md`]) {
+      const text = await ws.fs.readFile(path, "utf8").catch(() => "");
+      if (text) notes.push(text);
+    }
+  }
+  return notes.length ? `\n\nWhat we know about these sites:\n${notes.join("\n\n")}` : "";
+}
+
+export function createBrowseTool(apiKey: string, ws: Workspace): ToolRegistration {
   const bu = new BrowserUse({ apiKey });
   return defineTool({
     name: "browse",
@@ -37,7 +54,7 @@ export function createBrowseTool(apiKey: string): ToolRegistration {
         // Reuse the open session only while it's idle; a stopped, expired or broken one is replaced.
         const old = doc.sessionId ? await bu.sessions.get(doc.sessionId).catch(() => undefined) : undefined;
         let s: SessionResponse = await bu.sessions.create({
-          task: `${RULES}\n\nTask: ${task}`, profileId, keepAlive: true, proxyCountryCode: "in",
+          task: `${RULES}\n\nTask: ${task}${await siteNotes(ws, task)}`, profileId, keepAlive: true, proxyCountryCode: "in",
           sessionId: old?.status === "idle" ? old.id : undefined,
         });
         await save({ sessionId: s.id });

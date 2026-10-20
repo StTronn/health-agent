@@ -1,9 +1,6 @@
 # Lab tests
 
-## Orange Health — https://www.orangehealth.in
-- Test pages: `/<test>-test` (e.g. /hba1c-test). Price includes home collection, "within 60 minutes of booking". Cities: Bangalore, Delhi, Gurgaon, Noida, Hyderabad, Mumbai, Pune; prices vary by city (HbA1c ₹440–550, Oct 2026).
-- Login is phone number + OTP.
-- (Add what you learn from each run: flow order, quirks, where it asks for what.)
+Sites: Orange Health (orangehealth.in), Tata 1mg Labs (1mg.com/labs); see `sites/`.
 
 ## Preparation
 - **Fasting 10–12 h** (water is fine): fasting glucose, lipid profile. Book an early-morning slot.

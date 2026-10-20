@@ -34,7 +34,7 @@ export function createAgent({ workspace, secrets, ensureWakeupAt }: AgentDeps): 
     triageTool(() => [...files, search]), // the fork reads, records and searches; it never escalates or talks
     escalateTool(workspace),
     scheduleTool(wakeup, ensureWakeupAt),
-    ...(secrets.BROWSER_USE_API_KEY ? [createBrowseTool(secrets.BROWSER_USE_API_KEY)] : []),
+    ...(secrets.BROWSER_USE_API_KEY ? [createBrowseTool(secrets.BROWSER_USE_API_KEY, workspace)] : []),
   ];
   const family = defineExtension({ name: "family-health", tools, tasks: [wakeup], sections: sections(workspace) });
   const registry = createRegistry();
