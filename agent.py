@@ -1,4 +1,4 @@
-"""Family health agent: one main agent, one triage fork, one tool, one guardrail.
+"""Family health agent: one main agent, one triage fork, two tools (escalate, browse), one guardrail.
 Behaviour lives in SOUL.md, prompt.md and skills/; memory lives in family/."""
 from datetime import date, datetime
 from pathlib import Path
@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from langgraph.checkpoint.memory import MemorySaver
 
 from guardrails import backstop, escalate
+from tools.browser import browse
 
 ROOT = Path(__file__).parent
 load_dotenv(ROOT / ".env")
@@ -19,7 +20,7 @@ agent = create_deep_agent(
     memory=["/family/MEMORY.md"],
     skills=["/skills/"],
     backend=LocalShellBackend(root_dir=ROOT, virtual_mode=True),
-    tools=[escalate, {"type": "web_search"}],  # extension point: lab, knowledge-base or telemedicine tools / MCP go here
+    tools=[escalate, browse, {"type": "web_search"}],  # extension point: lab, knowledge-base or telemedicine tools / MCP go here
     subagents=[{
         "name": "triage", "mode": "fork", "tools": [{"type": "web_search"}],  # OpenAI built-in search
         "description": "Continue this conversation as the triage clinician: follow the triage skill on the "

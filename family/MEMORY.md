@@ -1,11 +1,15 @@
 # Household
 - country: India · emergency: 112
+- address: not on file · pincode: not on file
 - account holder: [[members/priya]]
 
 ## Members
 - [[members/priya]]: 34, account holder · aliases: me, myself
 - [[members/aarav]]: 4, son · aliases: my son, the kid, little one
 - [[members/ramesh]]: 68, father · type 2 diabetes, hypertension · aliases: dad, papa, father, grandpa
+
+## Orders
+- [[orders]]: lab bookings and medicine orders
 
 ## Open episodes
 - none
