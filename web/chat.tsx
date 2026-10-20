@@ -1,4 +1,4 @@
-import { CalendarClock, CircleAlert, HeartPulse, LogOut, RotateCcw, SquarePen } from "lucide-react";
+import { CalendarClock, CircleAlert, FolderTree, HeartPulse, LogOut, RotateCcw, SquarePen } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Conversation, ConversationContent, ConversationEmptyState, ConversationScrollButton } from "@/components/ai-elements/conversation";
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
@@ -8,7 +8,9 @@ import { Suggestion } from "@/components/ai-elements/suggestion";
 import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { call, type Checkin, type Session, type Step, stream } from "@/lib/api";
+import { Memory } from "./memory";
 
 type Item = { id: string; role: "user" | "assistant"; text: string; steps?: Step[]; checkin?: boolean; error?: boolean; retry?: string; requestId?: string };
 
@@ -72,6 +74,11 @@ export function Chat({ session, onSignOut }: { session: Session; onSignOut: () =
   const [busy, setBusy] = useState(false);
   const [live, setLive] = useState<{ activity?: string; text: string }>({ text: "" });
   const seen = useRef<number | null>(null);
+  const [panel, setPanel] = useState(() => localStorage.getItem("memory-panel") === "1"); // desktop side panel
+  const [sheet, setSheet] = useState(false); // mobile
+  const [version, setVersion] = useState(0); // bumped when memory may have changed
+  useEffect(() => localStorage.setItem("memory-panel", panel ? "1" : "0"), [panel]);
+  const toggleMemory = () => (matchMedia("(min-width: 64rem)").matches ? setPanel((p) => !p) : setSheet(true));
 
   useEffect(() => localStorage.setItem(key, JSON.stringify(state)), [key, state]);
   const add = (item: Item) => setState((s) => ({ ...s, items: [...s.items, item] }));
@@ -81,6 +88,7 @@ export function Chat({ session, onSignOut }: { session: Session; onSignOut: () =
     const poll = async () => {
       const { messages } = await call<{ messages: Checkin[] }>(session, `outbox?after=${seen.current ?? 0}`).catch(() => ({ messages: [] }));
       for (const m of messages) if (seen.current !== null) add({ id: `checkin-${m.seq}`, role: "assistant", text: m.text, checkin: true });
+      if (messages.length && seen.current !== null) setVersion((v) => v + 1);
       seen.current = messages.at(-1)?.seq ?? seen.current ?? 0;
     };
     void poll();
@@ -99,6 +107,7 @@ export function Chat({ session, onSignOut }: { session: Session; onSignOut: () =
         if (e.type === "text") setLive((l) => ({ ...l, text: l.text + e.delta }));
       });
       setState((s) => ({ conversation: r.conversation, items: [...s.items, { id: crypto.randomUUID(), role: "assistant", text: r.reply, steps: r.steps }] }));
+      setVersion((v) => v + 1);
     } catch (e) {
       add({ id: crypto.randomUUID(), role: "assistant", text: (e as Error).message, error: true, retry: text, requestId });
     } finally {
@@ -116,7 +125,8 @@ export function Chat({ session, onSignOut }: { session: Session; onSignOut: () =
   };
 
   return (
-    <main className="flex h-dvh flex-col">
+    <div className="flex h-dvh">
+    <main className="flex min-w-0 flex-1 flex-col">
       <header className="border-b">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3">
           <div className="flex min-w-0 items-center gap-2">
@@ -128,6 +138,7 @@ export function Chat({ session, onSignOut }: { session: Session; onSignOut: () =
             <Button variant="ghost" size="sm" disabled={busy} onClick={() => setState({ conversation: "new", items: [] })}>
               <SquarePen /> New chat
             </Button>
+            <Button variant="ghost" size="icon-sm" aria-label="Memory" title="Memory" aria-pressed={panel} onClick={toggleMemory}><FolderTree /></Button>
             <Button variant="ghost" size="icon-sm" aria-label="Sign out" title="Sign out" onClick={onSignOut}><LogOut /></Button>
           </div>
         </div>
@@ -199,5 +210,13 @@ export function Chat({ session, onSignOut }: { session: Session; onSignOut: () =
         <p className="text-center text-muted-foreground text-xs">Not a substitute for a doctor. In an emergency, call your local emergency number.</p>
       </div>
     </main>
+    {panel && <aside className="hidden w-[360px] shrink-0 border-l lg:flex"><Memory session={session} version={version} /></aside>}
+    <Sheet open={sheet} onOpenChange={setSheet}>
+      <SheetContent side="right" className="gap-0 p-0" showCloseButton={false}>
+        <SheetTitle className="sr-only">Memory</SheetTitle>
+        <Memory session={session} version={version} />
+      </SheetContent>
+    </Sheet>
+    </div>
   );
 }
